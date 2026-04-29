@@ -10,6 +10,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class BoardPanel extends JPanel {
@@ -72,6 +73,7 @@ public class BoardPanel extends JPanel {
         this.cellHeight = this.height / totalRow;
         File dir = new File("resource");
         File[] files = dir.listFiles();
+        Arrays.sort(files); //mac排序
         for (File file : files) {
             if (file.getName().endsWith(".png")) {
                 ImageIcon icon = new ImageIcon(file.getPath());

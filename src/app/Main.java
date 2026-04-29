@@ -9,20 +9,67 @@ import ui.GameFrame;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.RoundRectangle2D;
+import java.io.*;
 
 public class Main {
+    private static boolean checkLogin(String username, String password) {
+        File file = new File("users.txt"); //创建用户
+        if (!file.exists()) return false;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length >= 2
+                        && parts[0].equals(username)
+                        && parts[1].equals(password)) {
+                    return true;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private static boolean isUserExists(String username) {
+        File file = new File("users.txt");
+        if (!file.exists()) return false;
+
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts.length >= 1 && parts[0].equals(username)) {
+                    return true;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    private static boolean saveUser(String username, String password) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter("users.txt", true))) {
+            bw.write(username + "," + password);
+            bw.newLine();
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
 
-
-            JFrame login = new JFrame("登录");
+            JFrame login = new JFrame("登录"); // 登录窗口
             login.setLayout(null);
             login.setSize(400, 300);
             login.setLocationRelativeTo(null);
-            login.setUndecorated(true);
-            login.setShape(new RoundRectangle2D.Double(0, 0, login.getWidth(), login.getHeight(), 20, 20));
 
-            JPanel panel = new JPanel(){
+            JPanel panel = new JPanel(){ // 登录窗口面板
                 @Override
                 protected void paintComponent(Graphics g) {
                     super.paintComponent(g);
@@ -49,7 +96,7 @@ public class Main {
             labelUser.setSize(100, 45);
             labelPWD.setSize(100, 45);
 
-            JTextField textUser = new JTextField(){
+            JTextField textUser = new JTextField(){// 用户名输入框
                 @Override
                 protected void paintComponent(Graphics g) {
                     Graphics2D g2 = (Graphics2D) g.create();
@@ -68,7 +115,7 @@ public class Main {
             textUser.setBounds(160, 80, 200, 38);
             panel.add(textUser);
 
-            JTextField textPWD = new JTextField(){
+            JTextField textPWD = new JTextField(){// 密码输入框
                 @Override
                 protected void paintComponent(Graphics g) {
                     Graphics2D g2 = (Graphics2D) g.create();
@@ -92,39 +139,7 @@ public class Main {
             textUser.setSize(200, 45);
             textPWD.setSize(200, 45);
 
-            JButton closeBtn = new JButton() {
-                @Override
-                protected void paintComponent(Graphics g) {
-                    Graphics2D g2 = (Graphics2D) g.create();
-                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-                    if (getModel().isPressed()) {
-                        g2.setColor(new Color(255, 55, 55));
-                    } else if (getModel().isRollover()) {
-                        g2.setColor(new Color(255, 78, 31));
-                    } else {
-                        g2.setColor(new Color(230, 29, 10));
-                    }
-
-                    g2.fillOval(0, 0, getWidth(), getHeight());
-                    g2.dispose();
-                    super.paintComponent(g);
-                }
-            };
-
-            closeBtn.setFocusPainted(false);
-            closeBtn.setBorderPainted(false);
-            closeBtn.setContentAreaFilled(false);
-            closeBtn.setForeground(Color.WHITE);
-            closeBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            closeBtn.setBounds(10, 10, 20, 20);
-            panel.add(closeBtn);
-
-            closeBtn.addActionListener(e -> login.dispose());
-
-
-
-            JButton loginBtn = new JButton("登录\\注册");
+            JButton loginBtn = new JButton("登录\\注册");// 登录注册按钮
 
             loginBtn.setFocusable(false);
             loginBtn.setBorderPainted(false);
@@ -134,7 +149,7 @@ public class Main {
             loginBtn.setForeground(Color.white);
             loginBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-            loginBtn = new JButton("登录\\注册") {
+            loginBtn = new JButton("登录\\注册") {// 登录注册按钮
                 @Override
                 protected void paintComponent(Graphics g) {
                     Graphics2D g2 = (Graphics2D) g.create();
@@ -153,7 +168,7 @@ public class Main {
 
                     g2.fillRoundRect(0, 0, getWidth(), getHeight(), 25, 25); // 圆角
                     g2.dispose();
-                    super.paintComponent(g); // 画文字
+                    super.paintComponent(g);
                 }
             };
             loginBtn.setFocusPainted(false);
@@ -166,14 +181,42 @@ public class Main {
             panel.add(loginBtn);
 
             loginBtn.addActionListener(e -> {
-                String user = textUser.getText();
-                String pwd = textPWD.getText();
-                if (user.equals("admin") && pwd.equals("123456")) {
+                String user = textUser.getText().trim();
+                String pwd = new String(textPWD.getText()).trim();
+
+                if (user.isEmpty() || pwd.isEmpty()) {
+                    JOptionPane.showMessageDialog(login, "用户名和密码不能为空！");
+                    return;
+                }
+
+                if (checkLogin(user, pwd)) {
+                    // 登录成功，打开游戏
                     GameFrame frame = new GameFrame("连连看", 800, 1000);
                     frame.repaint();
                     login.dispose();
+
+                } else if (isUserExists(user)) {
+                    // 用户名存在但密码错误
+                    JOptionPane.showMessageDialog(login, "密码错误！");
+
                 } else {
-                    JOptionPane.showMessageDialog(login, "用户名或密码错误");
+                    // 用户不存在，提示注册
+                    int choice = JOptionPane.showConfirmDialog(
+                            login,
+                            "用户「" + user + "」不存在，是否注册？",
+                            "注册提示",
+                            JOptionPane.YES_NO_OPTION
+                    );
+                    if (choice == JOptionPane.YES_OPTION) {
+                        if (saveUser(user, pwd)) {
+                            JOptionPane.showMessageDialog(login, "注册成功，自动登录！");
+                            GameFrame frame = new GameFrame("连连看", 800, 1000);
+                            frame.repaint();
+                            login.dispose();
+                        } else {
+                            JOptionPane.showMessageDialog(login, "注册失败，请重试！");
+                        }
+                    }
                 }
             });
 
