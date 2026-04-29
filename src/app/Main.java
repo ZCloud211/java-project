@@ -190,8 +190,19 @@ public class Main {
                 }
 
                 if (checkLogin(user, pwd)) {
-                    // 登录成功，打开游戏
-                    GameFrame frame = new GameFrame("连连看", 800, 1000);
+                    String[] options = {"简单模式", "困难模式"};
+                    int choice = JOptionPane.showOptionDialog(
+                            login,
+                            "请选择游戏难度",
+                            "难度选择",
+                            JOptionPane.DEFAULT_OPTION,
+                            JOptionPane.QUESTION_MESSAGE,
+                            null,
+                            options,
+                            options[0]
+                    );
+                    String mode = (choice == 1) ? "hard" : "easy";
+                    GameFrame frame = new GameFrame("连连看", 800, 1000, mode);
                     frame.repaint();
                     login.dispose();
 
@@ -209,8 +220,19 @@ public class Main {
                     );
                     if (choice == JOptionPane.YES_OPTION) {
                         if (saveUser(user, pwd)) {
-                            JOptionPane.showMessageDialog(login, "注册成功，自动登录！");
-                            GameFrame frame = new GameFrame("连连看", 800, 1000);
+                            String[] options = {"简单模式", "困难模式"};
+                            int Choice  = JOptionPane.showOptionDialog(
+                                    login,
+                                    "请选择游戏难度",
+                                    "难度选择",
+                                    JOptionPane.DEFAULT_OPTION,
+                                    JOptionPane.QUESTION_MESSAGE,
+                                    null,
+                                    options,
+                                    options[0]
+                            );
+                            String mode = (choice == 1) ? "hard" : "easy";
+                            GameFrame frame = new GameFrame("连连看", 800, 1000, mode);
                             frame.repaint();
                             login.dispose();
                         } else {

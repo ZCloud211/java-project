@@ -73,7 +73,7 @@ public class BoardPanel extends JPanel {
         this.cellHeight = this.height / totalRow;
         File dir = new File("resource");
         File[] files = dir.listFiles();
-        Arrays.sort(files); //mac排序
+        Arrays.sort(files); //mac上面要排序
         for (File file : files) {
             if (file.getName().endsWith(".png")) {
                 ImageIcon icon = new ImageIcon(file.getPath());
@@ -162,6 +162,7 @@ public class BoardPanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
+        int gap = 2;
         for (int i = 0; i < gameBoard.getRowCnt(); i++) {
             for (int j = 0; j < gameBoard.getColCnt(); j++) {
                 Rectangle rec = getRectangle(new Position(i, j));
@@ -174,19 +175,19 @@ public class BoardPanel extends JPanel {
                     g2.setColor(Color.RED);
                     g2.setStroke(new BasicStroke(3));
                     g2.drawRect(
-                            rec.getX() + 1,
-                            rec.getY() + 1,
-                            rec.getWidth() - 3,
-                            rec.getHeight() - 3
+                            rec.getX() + gap,
+                            rec.getY() + gap,
+                            rec.getWidth() - gap*2,
+                            rec.getHeight() - gap*2
                     );
                 } else {
                     g2.setColor(Color.GRAY);
                     g2.setStroke(new BasicStroke(1));
                     g2.drawRect(
-                            rec.getX(),
-                            rec.getY(),
-                            rec.getWidth() - 1,
-                            rec.getHeight() - 1
+                            rec.getX() + gap,
+                            rec.getY() + gap,
+                            rec.getWidth() - gap*2-1,
+                            rec.getHeight() - gap*2-1
                     );
                 }
             }
