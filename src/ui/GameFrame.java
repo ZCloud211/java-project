@@ -17,6 +17,7 @@ public class GameFrame extends JFrame{
     public GameFrame(String title, int width, int height, String mode) {
         super(title);
         this.setResizable(false);
+        this.statusPanel = new StatusPanel(0, 0, 800, 100);
         BoardPanel boardPanel;
         if (mode.equals("easy")) {
             int size = 9;
@@ -36,7 +37,7 @@ public class GameFrame extends JFrame{
                     board[i][j] = new Cell(new Position(i, j), false, 1);
                 }
             }
-            boardPanel = new BoardPanel(new GameBoard(size + 2, size + 2, board), 0, 100, 800, 800);
+            boardPanel = new BoardPanel(new GameBoard(size + 2, size + 2, board), 0, 100, 800, 800, this.statusPanel);
         } else {
             int size = 10;
             Cell[][] board = new Cell[size + 2][size + 2];
@@ -50,7 +51,7 @@ public class GameFrame extends JFrame{
                     board[i][j] = new Cell(new Position(i, j), false, 1);
                 }
             }
-            boardPanel = new BoardPanel(new GameBoard(size + 2, size + 2, board), 0, 100, 800, 800);
+            boardPanel = new BoardPanel(new GameBoard(size + 2, size + 2, board), 0, 100, 800, 800, this.statusPanel);
         }
         this.title = title;
         this.width = width;
@@ -59,8 +60,7 @@ public class GameFrame extends JFrame{
         this.setSize(width, height);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         this.setVisible(true);
-        this.statusPanel = new StatusPanel(0, 0, 800, 100);
-        this.controlPanel = new ControlPanel(statusPanel, 0, 900, 800, 100);
+        this.controlPanel = new ControlPanel(statusPanel, boardPanel, 0, 890, 800, 100);
         this.add(this.statusPanel);
         this.add(this.controlPanel);
         this.add(boardPanel);

@@ -30,6 +30,8 @@ public class BoardPanel extends JPanel {
     Position firstSelected = null;
     Position secondSelected = null;
     boolean animating = false;
+    boolean gameStarted = false;//开始游戏后才可以点击
+
     public Position getPositionByPoint(int x, int y) {
 
         int col = x / cellWidth;
@@ -57,8 +59,7 @@ public class BoardPanel extends JPanel {
         lineList.clear();
         repaint();
     }
-
-    public BoardPanel(GameBoard gameBoard, int offSetX, int offSetY,int width, int height) {
+    public BoardPanel(GameBoard gameBoard, int offSetX, int offSetY,int width, int height, StatusPanel statusPanel) {//绘制棋盘,并添加点击事件
         this.offSetX = offSetX;
         this.offSetY = offSetY;
         this.setBounds(offSetX, offSetY, width, height);
@@ -71,9 +72,11 @@ public class BoardPanel extends JPanel {
         this.setPreferredSize(new Dimension(this.width, this.height));
         this.cellWidth = this.width / totalCol;
         this.cellHeight = this.height / totalRow;
+        this.statusPanel = statusPanel;
+
         File dir = new File("resource");
         File[] files = dir.listFiles();
-        Arrays.sort(files); //mac上面要排序
+        Arrays.sort(files); //mac上面要排序图片，Windows不影响
         for (File file : files) {
             if (file.getName().endsWith(".png")) {
                 ImageIcon icon = new ImageIcon(file.getPath());
@@ -87,7 +90,13 @@ public class BoardPanel extends JPanel {
             }
         });
     }
+    StatusPanel statusPanel;//状态面板,用于显示游戏状态,时间,分数
+
     public void handleClick(int x, int y) {
+        if (!gameStarted) {//如果没有点击开始游戏按钮,则不处理点击事件
+            return;
+        }
+
         if (animating) {
             return;
         }
@@ -123,13 +132,16 @@ public class BoardPanel extends JPanel {
 
         secondCell.setChosen(true);
         repaint();
-        if (isAdjacent(firstSelected, secondSelected)) {
+//消除逻辑，目前只是相同图案消除
+        if (gameBoard.getCell(firstSelected.getRow(), firstSelected.getCol()).getIconIndex() ==//底层消除逻辑
+                gameBoard.getCell(secondSelected.getRow(), secondSelected.getCol()).getIconIndex()) {//如果是相同图标
+
             animating = true;
             showLine(
                     gameBoard.getCell(firstSelected.getRow(), firstSelected.getCol()),
                     gameBoard.getCell(secondSelected.getRow(), secondSelected.getCol())
-            );
-            Timer timer = new Timer(300, e -> {
+            );//显示消除线
+            Timer timer = new Timer(300, e -> {//300ms后删除选中状态
                 Cell c1 = gameBoard.getCell(firstSelected.getRow(), firstSelected.getCol());
                 Cell c2 = gameBoard.getCell(secondSelected.getRow(), secondSelected.getCol());
                 c1.setEmpty(true);
@@ -142,6 +154,7 @@ public class BoardPanel extends JPanel {
                 secondSelected = null;
                 animating = false;
                 repaint();
+                statusPanel.addScore(10);//增加分数
             });
             timer.setRepeats(false);
             timer.start();
@@ -153,13 +166,17 @@ public class BoardPanel extends JPanel {
             repaint();
         }
     }
+    public void startGame() {//开始游戏
+        gameStarted = true;
+    }
+
     public Rectangle getRectangle(Position position) {
         int x = position.getCol() * cellWidth;
         int y = position.getRow() * cellHeight;
         return new Rectangle(x, y, cellWidth, cellHeight);
     }
     @Override
-    protected void paintComponent(Graphics g) {
+    protected void paintComponent(Graphics g) {//绘制棋盘
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
         int gap = 2;

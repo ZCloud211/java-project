@@ -50,7 +50,7 @@ public class Main {
         return false;
     }
 
-    private static boolean saveUser(String username, String password) {
+    private static boolean saveUser(String username, String password) {//保存用户
         try (BufferedWriter bw = new BufferedWriter(new FileWriter("users.txt", true))) {
             bw.write(username + "," + password);
             bw.newLine();
@@ -61,7 +61,7 @@ public class Main {
         }
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) {//登录窗口
         SwingUtilities.invokeLater(() -> {
 
             JFrame login = new JFrame("登录"); // 登录窗口
@@ -98,7 +98,7 @@ public class Main {
 
             JTextField textUser = new JTextField(){// 用户名输入框
                 @Override
-                protected void paintComponent(Graphics g) {
+                protected void paintComponent(Graphics g) {//绘制用户名输入框
                     Graphics2D g2 = (Graphics2D) g.create();
                     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                     g2.setColor(new Color(255, 255, 255, 100)); // 半透明白
@@ -117,7 +117,7 @@ public class Main {
 
             JTextField textPWD = new JTextField(){// 密码输入框
                 @Override
-                protected void paintComponent(Graphics g) {
+                protected void paintComponent(Graphics g) {//绘制密码输入框
                     Graphics2D g2 = (Graphics2D) g.create();
                     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                     g2.setColor(new Color(255, 255, 255, 100));
@@ -189,7 +189,7 @@ public class Main {
                     return;
                 }
 
-                if (checkLogin(user, pwd)) {
+                if (checkLogin(user, pwd)) {//登录成功
                     String[] options = {"简单模式", "困难模式"};
                     int choice = JOptionPane.showOptionDialog(
                             login,
