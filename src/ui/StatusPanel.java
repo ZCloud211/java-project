@@ -41,7 +41,7 @@ public class StatusPanel extends JPanel {
             timeLabel.setText(String.format("%02d:%02d:%02d", hours, minutes, seconds));
         });
 
-        statusLabel.setFont(new Font("微软雅黑", Font.BOLD, 40));
+        statusLabel.setFont(new Font("微软雅黑", Font.BOLD, 30));
         timeLabel.setFont(new Font("微软雅黑", Font.BOLD, 40));
         scoreLabel.setFont(new Font("微软雅黑", Font.BOLD, 25));
 
@@ -49,9 +49,9 @@ public class StatusPanel extends JPanel {
         Dimension timeLabelSize = timeLabel.getPreferredSize();
         Dimension scoreLabelSize = scoreLabel.getPreferredSize();
 
-        int x = (width - size.width) / 5 ;
-        int y = (height - size.height) / 3;
-        int time_x = (width - timeLabelSize.width) * 2 / 3;
+        int x = (width - size.width) / 6 ;
+        int y = (height - size.height) / 2;
+        int time_x = (width - timeLabelSize.width) * 1 / 2;
         int time_y = (height - timeLabelSize.height) * 2 /3;
         statusLabel.setBounds(x, y, size.width, size.height);
         timeLabel.setBounds(time_x, time_y, timeLabelSize.width, timeLabelSize.height);
@@ -72,8 +72,8 @@ public class StatusPanel extends JPanel {
     public void setStatus(String text) {
         statusLabel.setText(text);
         Dimension size = statusLabel.getPreferredSize();
-        int x = (width - size.width) / 5;
-        int y = (height - size.height) / 3;
+        int x = (width - size.width) / 6;
+        int y = (height - size.height) / 2;
         statusLabel.setBounds(x, y, size.width, size.height);
         repaint();
 

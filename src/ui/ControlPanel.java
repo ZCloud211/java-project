@@ -31,7 +31,7 @@ public class ControlPanel extends JPanel {
             boardPanel.startGame();//开始游戏
             statusPanel.setStatus("游戏中");
             statusPanel.startTimer();
-            statusPanel.setFont(new Font("微软雅黑", Font.BOLD, 25));
+            statusPanel.setFont(new Font("微软雅黑", Font.BOLD, 30));
 
         });
     }

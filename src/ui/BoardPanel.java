@@ -41,6 +41,7 @@ public class BoardPanel extends JPanel {
         }
         return new Position(row, col);
     }
+
     public boolean isAdjacent(Position p1, Position p2) {
         int dr = Math.abs(p1.getRow() - p2.getRow());
         int dc = Math.abs(p1.getCol() - p2.getCol());
@@ -59,7 +60,8 @@ public class BoardPanel extends JPanel {
         lineList.clear();
         repaint();
     }
-    public BoardPanel(GameBoard gameBoard, int offSetX, int offSetY,int width, int height, StatusPanel statusPanel) {//绘制棋盘,并添加点击事件
+
+    public BoardPanel(GameBoard gameBoard, int offSetX, int offSetY, int width, int height, StatusPanel statusPanel) {//绘制棋盘,并添加点击事件
         this.offSetX = offSetX;
         this.offSetY = offSetY;
         this.setBounds(offSetX, offSetY, width, height);
@@ -86,10 +88,11 @@ public class BoardPanel extends JPanel {
         this.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                handleClick(e.getX() , e.getY());
+                handleClick(e.getX(), e.getY());
             }
         });
     }
+
     StatusPanel statusPanel;//状态面板,用于显示游戏状态,时间,分数
 
     public void handleClick(int x, int y) {
@@ -166,8 +169,10 @@ public class BoardPanel extends JPanel {
             repaint();
         }
     }
+
     public void startGame() {//开始游戏
         gameStarted = true;
+        repaint();
     }
 
     public Rectangle getRectangle(Position position) {
@@ -175,49 +180,78 @@ public class BoardPanel extends JPanel {
         int y = position.getRow() * cellHeight;
         return new Rectangle(x, y, cellWidth, cellHeight);
     }
+
     @Override
     protected void paintComponent(Graphics g) {//绘制棋盘
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
-        int gap = 2;
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        int gap = 4;
+
+        // 棋盘深色背景
+        g2.setColor(new Color(30, 45, 80));
+        g2.fillRect(0, 0, width, height);
+
         for (int i = 0; i < gameBoard.getRowCnt(); i++) {
             for (int j = 0; j < gameBoard.getColCnt(); j++) {
                 Rectangle rec = getRectangle(new Position(i, j));
-                g2.drawImage(
-                        imageList.get(gameBoard.getCell(i, j).getIconIndex()),
-                        rec.getX(), rec.getY(), rec.getWidth(), rec.getHeight(),
-                        this
-                );
-                if (gameBoard.getCell(i, j).getIsChosen()) {
-                    g2.setColor(Color.RED);
-                    g2.setStroke(new BasicStroke(3));
-                    g2.drawRect(
-                            rec.getX() + gap,
-                            rec.getY() + gap,
-                            rec.getWidth() - gap*2,
-                            rec.getHeight() - gap*2
-                    );
+                int x = rec.getX() + gap;
+                int y = rec.getY() + gap;
+                int w = rec.getWidth() - gap * 2;
+                int h = rec.getHeight() - gap * 2;
+
+                if (gameBoard.getCell(i, j).isEmpty()||!gameStarted) {
+                    // 空格子：半透明深色圆角,如果没有点开始游戏就只是画背景棋盘，不绘制棋子
+                    g2.setColor(new Color(20, 35, 65));
+                    g2.fillRoundRect(x, y, w, h, 12, 12);
                 } else {
-                    g2.setColor(Color.GRAY);
-                    g2.setStroke(new BasicStroke(1));
-                    g2.drawRect(
-                            rec.getX() + gap,
-                            rec.getY() + gap,
-                            rec.getWidth() - gap*2-1,
-                            rec.getHeight() - gap*2-1
+                    // 有图案格子：渐变浅色背景
+                    GradientPaint gp = new GradientPaint(
+                            x, y, new Color(220, 230, 255),
+                            x, y + h, new Color(180, 200, 240)
                     );
+                    g2.setPaint(gp);
+                    g2.fillRoundRect(x, y, w, h, 12, 12);
+
+                    // 格子边框
+                    g2.setColor(new Color(150, 170, 220));
+                    g2.setStroke(new BasicStroke(1));
+                    g2.drawRoundRect(x, y, w, h, 12, 12);
+
+                    // 画图片，留内边距
+                    g2.drawImage(
+                            imageList.get(gameBoard.getCell(i, j).getIconIndex()),
+                            x + 5, y + 5, w - 10, h - 10, this
+                    );
+
+                    // 选中效果
+                    if (gameBoard.getCell(i, j).getIsChosen()) {
+                        // 黄色蒙层
+                        g2.setColor(new Color(255, 220, 0, 80));
+                        g2.fillRoundRect(x, y, w, h, 12, 12);
+                        // 黄色边框
+                        g2.setColor(new Color(255, 200, 0));
+                        g2.setStroke(new BasicStroke(3));
+                        g2.drawRoundRect(x, y, w, h, 12, 12);
+                    }
                 }
             }
         }
-        g2.setColor(Color.RED);
-        g2.setStroke(new BasicStroke(3));
+
+        // 连线
         if (lineVisible) {
-            for (Line line: lineList) {
+            g2.setColor(new Color(255, 80, 80));
+            g2.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            for (Line line : lineList) {
                 Rectangle rec1 = getRectangle(line.getCell1().getPos());
                 Rectangle rec2 = getRectangle(line.getCell2().getPos());
-                g.drawLine((int) rec1.getCenterPosition().getX(), (int) rec1.getCenterPosition().getY(), (int) rec2.getCenterPosition().getX(), (int) rec2.getCenterPosition().getY());
+                g2.drawLine(
+                        (int) rec1.getCenterPosition().getX(),
+                        (int) rec1.getCenterPosition().getY(),
+                        (int) rec2.getCenterPosition().getX(),
+                        (int) rec2.getCenterPosition().getY()
+                );
             }
         }
-
     }
 }
