@@ -17,6 +17,8 @@ public class StatusPanel extends JPanel {
     int offSetY;
     int width;
     int height;
+    BoardPanel boardPanel;
+
     public StatusPanel(int offSetX, int offSetY,int width, int height) {
         this.setLayout(null);
         this.setBounds(offSetX, offSetY, width, height);
@@ -69,7 +71,7 @@ public class StatusPanel extends JPanel {
         repaint();
     }
 
-    public void setStatus(String text) {
+    public void setStatus(String text) {//设置状态
         statusLabel.setText(text);
         Dimension size = statusLabel.getPreferredSize();
         int x = (width - size.width) / 6;
@@ -80,5 +82,41 @@ public class StatusPanel extends JPanel {
     }
     public void startTimer() {
         timer.start();
+    }
+
+    public void stopTimer() {
+        timer.stop();
+    }
+
+    public void resetGame() {
+        String[] options = {"是", "否"};
+        int choice = JOptionPane.showOptionDialog(
+                null,
+                "确定要重新开始吗？",
+                "重新开始",
+                JOptionPane.DEFAULT_OPTION,
+                JOptionPane.QUESTION_MESSAGE,
+                null,
+                options,
+                options[0]
+        );
+        if (choice == JOptionPane.YES_OPTION) {
+            hours = 0;
+            minutes = 0;
+            seconds = 0;
+            addScore(0);
+            timeLabel.setText("00:00:00");
+            stopTimer();
+            addScore(0);
+            setStatus("准备就绪");
+        }else if (choice == JOptionPane.NO_OPTION) {
+            boardPanel.startGame();
+
+            startTimer();
+        }
+    }
+
+    public int getScore() {
+        return score;
     }
 }

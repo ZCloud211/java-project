@@ -201,6 +201,9 @@ public class Main {
                             options,
                             options[0]
                     );
+                    if (choice == JOptionPane.CLOSED_OPTION) {
+                        return;
+                    }
                     String mode = (choice == 1) ? "hard" : "easy";
                     GameFrame frame = new GameFrame("连连看", 800, 1000, mode);
                     frame.repaint();
@@ -231,6 +234,9 @@ public class Main {
                                     options,
                                     options[0]
                             );
+                            if (choice == JOptionPane.CLOSED_OPTION) {
+                                return;
+                            }
                             String mode = (choice == 1) ? "hard" : "easy";
                             GameFrame frame = new GameFrame("连连看", 800, 1000, mode);
                             frame.repaint();

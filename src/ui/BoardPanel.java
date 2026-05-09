@@ -31,6 +31,7 @@ public class BoardPanel extends JPanel {
     Position secondSelected = null;
     boolean animating = false;
     boolean gameStarted = false;//开始游戏后才可以点击
+    boolean gameWon = false;//游戏胜利标志
 
     public Position getPositionByPoint(int x, int y) {
 
@@ -59,6 +60,12 @@ public class BoardPanel extends JPanel {
         lineVisible = false;
         lineList.clear();
         repaint();
+    }
+    public void stopGame() {//停止游戏
+        gameStarted = false;
+        gameWon = false;
+        firstSelected = null;
+        secondSelected = null;
     }
 
     public BoardPanel(GameBoard gameBoard, int offSetX, int offSetY, int width, int height, StatusPanel statusPanel) {//绘制棋盘,并添加点击事件
@@ -156,8 +163,9 @@ public class BoardPanel extends JPanel {
                 firstSelected = null;
                 secondSelected = null;
                 animating = false;
+                statusPanel.addScore(10);//增加分数，消除一次加10分
+                checkWinCondition();
                 repaint();
-                statusPanel.addScore(10);//增加分数
             });
             timer.setRepeats(false);
             timer.start();
@@ -172,7 +180,19 @@ public class BoardPanel extends JPanel {
 
     public void startGame() {//开始游戏
         gameStarted = true;
+        gameWon = false;
         repaint();
+    }
+
+    public void checkWinCondition() {//检查游戏是否胜利，棋盘没有棋子时，游戏胜利
+        for (int i = 0; i < gameBoard.getRowCnt(); i++) {
+            for (int j = 0; j < gameBoard.getColCnt(); j++) {
+                if (!gameBoard.getCell(i, j).isEmpty()) {
+                    return;
+                }
+            }
+        }
+        gameWon = true;
     }
 
     public Rectangle getRectangle(Position position) {
@@ -189,7 +209,7 @@ public class BoardPanel extends JPanel {
         int gap = 4;
 
         // 棋盘深色背景
-        g2.setColor(new Color(30, 45, 80));
+        g2.setColor(new Color(245, 211, 85));
         g2.fillRect(0, 0, width, height);
 
         for (int i = 0; i < gameBoard.getRowCnt(); i++) {
@@ -202,20 +222,20 @@ public class BoardPanel extends JPanel {
 
                 if (gameBoard.getCell(i, j).isEmpty()||!gameStarted) {
                     // 空格子：半透明深色圆角,如果没有点开始游戏就只是画背景棋盘，不绘制棋子
-                    g2.setColor(new Color(20, 35, 65));
+                    g2.setColor(new Color(255, 191, 13));
                     g2.fillRoundRect(x, y, w, h, 12, 12);
                 } else {
                     // 有图案格子：渐变浅色背景
                     GradientPaint gp = new GradientPaint(
-                            x, y, new Color(220, 230, 255),
-                            x, y + h, new Color(180, 200, 240)
+                            x, y, new Color(255, 181, 30),
+                            x, y + h, new Color(255, 203, 9)
                     );
                     g2.setPaint(gp);
                     g2.fillRoundRect(x, y, w, h, 12, 12);
 
                     // 格子边框
-                    g2.setColor(new Color(150, 170, 220));
-                    g2.setStroke(new BasicStroke(1));
+                    g2.setColor(new Color(145, 59, 0));
+                    g2.setStroke(new BasicStroke(2));
                     g2.drawRoundRect(x, y, w, h, 12, 12);
 
                     // 画图片，留内边距
@@ -226,11 +246,11 @@ public class BoardPanel extends JPanel {
 
                     // 选中效果
                     if (gameBoard.getCell(i, j).getIsChosen()) {
-                        // 黄色蒙层
-                        g2.setColor(new Color(255, 220, 0, 80));
+                        // 蒙层，选中棋子的效果
+                        g2.setColor(new Color(93, 147, 227, 80));
                         g2.fillRoundRect(x, y, w, h, 12, 12);
-                        // 黄色边框
-                        g2.setColor(new Color(255, 200, 0));
+                        // 边框，棋子的边框
+                        g2.setColor(new Color(44, 83, 136));
                         g2.setStroke(new BasicStroke(3));
                         g2.drawRoundRect(x, y, w, h, 12, 12);
                     }
@@ -238,9 +258,9 @@ public class BoardPanel extends JPanel {
             }
         }
 
-        // 连线
+        // 连线效果
         if (lineVisible) {
-            g2.setColor(new Color(255, 80, 80));
+            g2.setColor(new Color(80, 188, 255));
             g2.setStroke(new BasicStroke(3, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
             for (Line line : lineList) {
                 Rectangle rec1 = getRectangle(line.getCell1().getPos());
@@ -252,6 +272,45 @@ public class BoardPanel extends JPanel {
                         (int) rec2.getCenterPosition().getY()
                 );
             }
+        }
+
+        // 胜利画面
+        if (gameWon) {
+            int panelWidth = width;
+            int panelHeight = height;
+            
+            // 半透明黑色背景，模糊棋盘的效果
+            g2.setColor(new Color(0, 0, 0, 180));
+            g2.fillRect(0, 0, panelWidth, panelHeight);
+            
+            // 胜利窗口的边框
+            int boxWidth = 400;
+            int boxHeight = 200;
+            int boxX = (panelWidth - boxWidth) / 2;
+            int boxY = (panelHeight - boxHeight) / 2;
+            
+            g2.setColor(new Color(145, 59, 0));
+            g2.setStroke(new BasicStroke(4));
+            g2.fillRoundRect(boxX, boxY, boxWidth, boxHeight, 20, 20);
+            
+            // 游戏胜利时的窗口背景
+            g2.setColor(new Color(83, 109, 244, 184));
+            g2.fillRoundRect(boxX + 5, boxY + 5, boxWidth - 10, boxHeight - 10, 15, 15);
+            
+            // 游戏胜利文字
+            g2.setColor(new Color(255, 215, 0));
+            g2.setFont(new Font("微软雅黑", Font.BOLD, 48));
+            FontMetrics fm = g2.getFontMetrics();
+            String winText = "恭喜通关！🥳";
+            int textWidth = fm.stringWidth(winText);
+            g2.drawString(winText, (panelWidth - textWidth) / 2, boxY + 80);
+            
+            // 分数文字
+            g2.setColor(new Color(255, 255, 255));
+            g2.setFont(new Font("微软雅黑", Font.PLAIN, 24));
+            String scoreText = "最终得分: " + statusPanel.getScore();
+            textWidth = fm.stringWidth(scoreText);
+            g2.drawString(scoreText, (panelWidth - textWidth) / 2, boxY + 130);
         }
     }
 }
