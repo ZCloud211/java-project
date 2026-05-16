@@ -205,7 +205,7 @@ public class Main {
                         return;
                     }
                     String mode = (choice == 1) ? "hard" : "easy";
-                    GameFrame frame = new GameFrame("连连看", 800, 1000, mode);
+                    GameFrame frame = new GameFrame("连连看", 1200, 900, mode);
                     frame.repaint();
                     login.dispose();
 
@@ -238,7 +238,7 @@ public class Main {
                                 return;
                             }
                             String mode = (choice == 1) ? "hard" : "easy";
-                            GameFrame frame = new GameFrame("连连看", 800, 1000, mode);
+                            GameFrame frame = new GameFrame("连连看", 1200, 900, mode);
                             frame.repaint();
                             login.dispose();
                         } else {

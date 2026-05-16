@@ -32,6 +32,7 @@ public class BoardPanel extends JPanel {
     boolean animating = false;
     boolean gameStarted = false;//开始游戏后才可以点击
     boolean gameWon = false;//游戏胜利标志
+    String mode;
 
     public Position getPositionByPoint(int x, int y) {
 
@@ -68,7 +69,7 @@ public class BoardPanel extends JPanel {
         secondSelected = null;
     }
 
-    public BoardPanel(GameBoard gameBoard, int offSetX, int offSetY, int width, int height, StatusPanel statusPanel) {//绘制棋盘,并添加点击事件
+    public BoardPanel(GameBoard gameBoard, int offSetX, int offSetY, int width, int height, StatusPanel statusPanel, String mode) {//绘制棋盘,并添加点击事件
         this.offSetX = offSetX;
         this.offSetY = offSetY;
         this.setBounds(offSetX, offSetY, width, height);
@@ -82,6 +83,7 @@ public class BoardPanel extends JPanel {
         this.cellWidth = this.width / totalCol;
         this.cellHeight = this.height / totalRow;
         this.statusPanel = statusPanel;
+        this.mode = mode;
 
         File dir = new File("resource");
         File[] files = dir.listFiles();
@@ -181,6 +183,55 @@ public class BoardPanel extends JPanel {
     public void startGame() {//开始游戏
         gameStarted = true;
         gameWon = false;
+        repaint();
+    }
+
+    public void resetBoard() {//重置棋盘
+        gameStarted = false;
+        gameWon = false;
+        firstSelected = null;
+        secondSelected = null;
+        animating = false;
+        lineVisible = false;
+        lineList.clear();
+
+        int size;
+        if (mode.equals("easy")) {
+            size = 9;
+        } else {
+            size = 10;
+        }
+
+        Cell[][] board = new Cell[size + 2][size + 2];
+        for (int i = 0; i < size + 2; i++) {
+            for (int j = 0; j < size + 2; j++) {
+                board[i][j] = new Cell(new Position(i, j), true, 0);
+            }
+        }
+        if (mode.equals("easy")) {
+            for (int i = 1; i <= 4; i++) {
+                for (int j = 1; j <= 4; j++) {
+                    board[i][j] = new Cell(new Position(i, j), false, 1);
+                }
+            }
+            for (int i = 6; i <= 9; i++) {
+                for (int j = 6; j <= 9; j++) {
+                    board[i][j] = new Cell(new Position(i, j), false, 1);
+                }
+            }
+        } else {
+            for (int i = 1; i <= 10; i++) {
+                for (int j = 1; j <= 10; j++) {
+                    board[i][j] = new Cell(new Position(i, j), false, 1);
+                }
+            }
+        }
+
+        this.gameBoard = new GameBoard(size + 2, size + 2, board);
+        this.totalRow = size + 2;
+        this.totalCol = size + 2;
+        this.cellWidth = this.width / totalCol;
+        this.cellHeight = this.height / totalRow;
         repaint();
     }
 
@@ -301,7 +352,7 @@ public class BoardPanel extends JPanel {
             g2.setColor(new Color(255, 215, 0));
             g2.setFont(new Font("微软雅黑", Font.BOLD, 48));
             FontMetrics fm = g2.getFontMetrics();
-            String winText = "恭喜通关！🥳";
+            String winText = "★恭喜通关★";
             int textWidth = fm.stringWidth(winText);
             g2.drawString(winText, (panelWidth - textWidth) / 2, boxY + 80);
             
