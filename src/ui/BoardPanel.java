@@ -16,6 +16,12 @@ import java.util.List;
 public class BoardPanel extends JPanel {
     int offSetX;
     int offSetY;
+    //消除的动画参数
+    float eliminateAlpha = 1.0f;  // 透明度 1.0到0.0
+    float eliminateScale = 1.0f;  // 缩放 1.0到0.0
+    Cell animCell1 = null;        // 正在消除的格子1
+    Cell animCell2 = null;        // 正在消除的格子2
+
 
     List<Image> imageList = new ArrayList<>();
     GameBoard gameBoard;
@@ -32,6 +38,7 @@ public class BoardPanel extends JPanel {
     boolean animating = false;
     boolean gameStarted = false;//开始游戏后才可以点击
     boolean gameWon = false;//游戏胜利标志
+    String mode;
 
     public Position getPositionByPoint(int x, int y) {
 
@@ -68,7 +75,7 @@ public class BoardPanel extends JPanel {
         secondSelected = null;
     }
 
-    public BoardPanel(GameBoard gameBoard, int offSetX, int offSetY, int width, int height, StatusPanel statusPanel) {//绘制棋盘,并添加点击事件
+    public BoardPanel(GameBoard gameBoard, int offSetX, int offSetY, int width, int height, StatusPanel statusPanel, String mode) {//绘制棋盘,并添加点击事件
         this.offSetX = offSetX;
         this.offSetY = offSetY;
         this.setBounds(offSetX, offSetY, width, height);
@@ -82,6 +89,7 @@ public class BoardPanel extends JPanel {
         this.cellWidth = this.width / totalCol;
         this.cellHeight = this.height / totalRow;
         this.statusPanel = statusPanel;
+        this.mode = mode;
 
         File dir = new File("resource");
         File[] files = dir.listFiles();
@@ -151,24 +159,39 @@ public class BoardPanel extends JPanel {
                     gameBoard.getCell(firstSelected.getRow(), firstSelected.getCol()),
                     gameBoard.getCell(secondSelected.getRow(), secondSelected.getCol())
             );//显示消除线
-            Timer timer = new Timer(300, e -> {//300ms后删除选中状态
-                Cell c1 = gameBoard.getCell(firstSelected.getRow(), firstSelected.getCol());
-                Cell c2 = gameBoard.getCell(secondSelected.getRow(), secondSelected.getCol());
-                c1.setEmpty(true);
-                c2.setEmpty(true);
-                c1.setChosen(false);
-                c2.setChosen(false);
-                lineVisible = false;
-                lineList.clear();
-                firstSelected = null;
-                secondSelected = null;
-                animating = false;
-                statusPanel.addScore(10);//增加分数，消除一次加10分
-                checkWinCondition();
+            // 新加，消除的动画
+            animCell1 = gameBoard.getCell(firstSelected.getRow(), firstSelected.getCol());
+            animCell2 = gameBoard.getCell(secondSelected.getRow(), secondSelected.getCol());
+            eliminateAlpha = 1.0f;
+            eliminateScale = 1.0f;
+            Timer animTimer = new Timer(16, null); // 每16ms一帧，约60fps
+            animTimer.addActionListener(e -> {
+                eliminateAlpha -= 0.08f;  // 每帧透明度减少
+                eliminateScale -= 0.08f;  // 每帧缩小
+
+                if (eliminateAlpha <= 0) {
+                    // 动画结束，正式消除
+                    eliminateAlpha = 0;
+                    eliminateScale = 0;
+                    animTimer.stop();
+
+                    animCell1.setEmpty(true);
+                    animCell2.setEmpty(true);
+                    animCell1.setChosen(false);
+                    animCell2.setChosen(false);
+                    animCell1 = null;
+                    animCell2 = null;
+                    lineVisible = false;
+                    lineList.clear();
+                    firstSelected = null;
+                    secondSelected = null;
+                    animating = false;
+                    eliminateAlpha = 1.0f;
+                    eliminateScale = 1.0f;
+                }
                 repaint();
             });
-            timer.setRepeats(false);
-            timer.start();
+            animTimer.start();
         } else {
             gameBoard.clearAllChosen();
             secondCell.setChosen(true);
@@ -181,6 +204,55 @@ public class BoardPanel extends JPanel {
     public void startGame() {//开始游戏
         gameStarted = true;
         gameWon = false;
+        repaint();
+    }
+
+    public void resetBoard() {//重置棋盘
+        gameStarted = false;
+        gameWon = false;
+        firstSelected = null;
+        secondSelected = null;
+        animating = false;
+        lineVisible = false;
+        lineList.clear();
+
+        int size;
+        if (mode.equals("easy")) {
+            size = 9;
+        } else {
+            size = 10;
+        }
+
+        Cell[][] board = new Cell[size + 2][size + 2];
+        for (int i = 0; i < size + 2; i++) {
+            for (int j = 0; j < size + 2; j++) {
+                board[i][j] = new Cell(new Position(i, j), true, 0);
+            }
+        }
+        if (mode.equals("easy")) {
+            for (int i = 1; i <= 4; i++) {
+                for (int j = 1; j <= 4; j++) {
+                    board[i][j] = new Cell(new Position(i, j), false, 1);
+                }
+            }
+            for (int i = 6; i <= 9; i++) {
+                for (int j = 6; j <= 9; j++) {
+                    board[i][j] = new Cell(new Position(i, j), false, 1);
+                }
+            }
+        } else {
+            for (int i = 1; i <= 10; i++) {
+                for (int j = 1; j <= 10; j++) {
+                    board[i][j] = new Cell(new Position(i, j), false, 1);
+                }
+            }
+        }
+
+        this.gameBoard = new GameBoard(size + 2, size + 2, board);
+        this.totalRow = size + 2;
+        this.totalCol = size + 2;
+        this.cellWidth = this.width / totalCol;
+        this.cellHeight = this.height / totalRow;
         repaint();
     }
 
@@ -199,6 +271,38 @@ public class BoardPanel extends JPanel {
         int x = position.getCol() * cellWidth;
         int y = position.getRow() * cellHeight;
         return new Rectangle(x, y, cellWidth, cellHeight);
+    }
+
+    private void drawEliminateCell(Graphics2D g2, Cell cell) {
+        Rectangle rec = getRectangle(cell.getPos());
+        int gap = 4;
+        int x = rec.getX() + gap;
+        int y = rec.getY() + gap;
+        int w = rec.getWidth() - gap * 2;
+        int h = rec.getHeight() - gap * 2;
+
+        // 根据缩放计算实际位置（从中心缩小）
+        int scaledW = (int) (w * eliminateScale);
+        int scaledH = (int) (h * eliminateScale);
+        int scaledX = x + (w - scaledW) / 2;
+        int scaledY = y + (h - scaledH) / 2;
+
+        // 设置透明度
+        AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.max(0, eliminateAlpha));
+        g2.setComposite(ac);
+
+        // 画格子背景
+        g2.setColor(new Color(200, 215, 245));
+        g2.fillRoundRect(scaledX, scaledY, scaledW, scaledH, 12, 12);
+
+        // 画图片
+        g2.drawImage(
+                imageList.get(cell.getIconIndex()),
+                scaledX + 4, scaledY + 4, scaledW - 8, scaledH - 8, this
+        );
+
+        // 恢复透明度
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
     }
 
     @Override
@@ -301,7 +405,7 @@ public class BoardPanel extends JPanel {
             g2.setColor(new Color(255, 215, 0));
             g2.setFont(new Font("微软雅黑", Font.BOLD, 48));
             FontMetrics fm = g2.getFontMetrics();
-            String winText = "恭喜通关！🥳";
+            String winText = "★恭喜通关★";
             int textWidth = fm.stringWidth(winText);
             g2.drawString(winText, (panelWidth - textWidth) / 2, boxY + 80);
             
@@ -312,5 +416,11 @@ public class BoardPanel extends JPanel {
             textWidth = fm.stringWidth(scoreText);
             g2.drawString(scoreText, (panelWidth - textWidth) / 2, boxY + 130);
         }
+        // 画消除动画格子
+        if (animCell1 != null && animCell2 != null) {
+            drawEliminateCell(g2, animCell1);
+            drawEliminateCell(g2, animCell2);
+        }
+
     }
 }
