@@ -66,7 +66,7 @@ public class Main {
 
             JFrame login = new JFrame("登录"); // 登录窗口
             login.setLayout(null);
-            login.setSize(400, 300);
+            login.setSize(400, 340);
             login.setLocationRelativeTo(null);
 
             JPanel panel = new JPanel(){ // 登录窗口面板
@@ -148,6 +148,47 @@ public class Main {
             loginBtn.setFont(new Font("微软雅黑", Font.BOLD, 18));
             loginBtn.setForeground(Color.white);
             loginBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            //游客登录
+            JButton guestBtn = new JButton("游客登录") {
+                @Override
+                protected void paintComponent(Graphics g) {
+                    Graphics2D g2 = (Graphics2D) g.create();
+                    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                    if (getModel().isRollover()) {
+                        g2.setColor(new Color(180, 180, 180, 180));
+                    } else {
+                        g2.setColor(new Color(160, 160, 160, 150));
+                    }
+                    g2.fillRoundRect(0, 0, getWidth(), getHeight(), 25, 25);
+                    g2.dispose();
+                    super.paintComponent(g);
+                }
+            };
+            guestBtn.setFocusPainted(false);
+            guestBtn.setBorderPainted(false);
+            guestBtn.setContentAreaFilled(false);
+            guestBtn.setFont(new Font("微软雅黑", Font.BOLD, 18));
+            guestBtn.setForeground(Color.WHITE);
+            guestBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            guestBtn.setBounds(100, 235, 200, 45); // 登录按钮下面
+            panel.add(guestBtn);
+
+            guestBtn.addActionListener(e -> {
+                // 游客模式直接进入
+                String[] options = {"简单模式", "困难模式"};
+                int choice = JOptionPane.showOptionDialog(
+                        login, "请选择游戏难度", "难度选择",
+                        JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE,
+                        null, options, options[0]
+                );
+                if (choice == JOptionPane.CLOSED_OPTION) {
+                    return;
+                }
+                String mode = (choice == 1) ? "hard" : "easy";
+                GameFrame frame = new GameFrame("连连看", 1200, 900, mode,"guest"); // 传游客标识
+                frame.repaint();
+                login.dispose();
+            });
 
             loginBtn = new JButton("登录\\注册") {// 登录注册按钮
                 @Override
@@ -205,7 +246,7 @@ public class Main {
                         return;
                     }
                     String mode = (choice == 1) ? "hard" : "easy";
-                    GameFrame frame = new GameFrame("连连看", 800, 1000, mode);
+                    GameFrame frame = new GameFrame("连连看", 1200, 900, mode,user);
                     frame.repaint();
                     login.dispose();
 
@@ -224,7 +265,7 @@ public class Main {
                     if (choice == JOptionPane.YES_OPTION) {
                         if (saveUser(user, pwd)) {
                             String[] options = {"简单模式", "困难模式"};
-                            int Choice  = JOptionPane.showOptionDialog(
+                            int newChoice  = JOptionPane.showOptionDialog(
                                     login,
                                     "请选择游戏难度",
                                     "难度选择",
@@ -234,11 +275,11 @@ public class Main {
                                     options,
                                     options[0]
                             );
-                            if (choice == JOptionPane.CLOSED_OPTION) {
+                            if (newChoice == JOptionPane.CLOSED_OPTION) {
                                 return;
                             }
-                            String mode = (choice == 1) ? "hard" : "easy";
-                            GameFrame frame = new GameFrame("连连看", 800, 1000, mode);
+                            String mode = (newChoice == 1) ? "hard" : "easy";
+                            GameFrame frame = new GameFrame("连连看", 1200, 900, mode,user);
                             frame.repaint();
                             login.dispose();
                         } else {

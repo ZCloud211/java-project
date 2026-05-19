@@ -17,6 +17,11 @@ public class BoardPanel extends JPanel {
     int offSetX;
     int offSetY;
 
+    float eliminateAlpha = 1.0f;  // 透明度 1.0到0.0
+    float eliminateScale = 1.0f;  // 缩放 1.0到0.0
+    Cell animCell1 = null;        // 正在消除的格子1
+    Cell animCell2 = null;        // 正在消除的格子2
+
     List<Image> imageList = new ArrayList<>();
     GameBoard gameBoard;
     List<Line> lineList = new ArrayList<>();
@@ -32,6 +37,7 @@ public class BoardPanel extends JPanel {
     boolean animating = false;
     boolean gameStarted = false;//开始游戏后才可以点击
     boolean gameWon = false;//游戏胜利标志
+    String mode;
 
     public Position getPositionByPoint(int x, int y) {
 
@@ -49,9 +55,9 @@ public class BoardPanel extends JPanel {
         return dr + dc == 1;
     }
 
-    public void showLine(Cell c1, Cell c2) {
+    public void showLine(List<Line> lines) {
         lineList.clear();
-        lineList.add(new Line(c1, c2));
+        lineList.addAll(lines);
         lineVisible = true;
         repaint();
     }
@@ -68,7 +74,7 @@ public class BoardPanel extends JPanel {
         secondSelected = null;
     }
 
-    public BoardPanel(GameBoard gameBoard, int offSetX, int offSetY, int width, int height, StatusPanel statusPanel) {//绘制棋盘,并添加点击事件
+    public BoardPanel(GameBoard gameBoard, int offSetX, int offSetY, int width, int height, StatusPanel statusPanel, String mode) {//绘制棋盘,并添加点击事件
         this.offSetX = offSetX;
         this.offSetY = offSetY;
         this.setBounds(offSetX, offSetY, width, height);
@@ -82,6 +88,7 @@ public class BoardPanel extends JPanel {
         this.cellWidth = this.width / totalCol;
         this.cellHeight = this.height / totalRow;
         this.statusPanel = statusPanel;
+        this.mode = mode;
 
         File dir = new File("resource");
         File[] files = dir.listFiles();
@@ -142,45 +149,135 @@ public class BoardPanel extends JPanel {
 
         secondCell.setChosen(true);
         repaint();
-//消除逻辑，目前只是相同图案消除
-        if (gameBoard.getCell(firstSelected.getRow(), firstSelected.getCol()).getIconIndex() ==//底层消除逻辑
-                gameBoard.getCell(secondSelected.getRow(), secondSelected.getCol()).getIconIndex()) {//如果是相同图标
 
-            animating = true;
-            showLine(
-                    gameBoard.getCell(firstSelected.getRow(), firstSelected.getCol()),
-                    gameBoard.getCell(secondSelected.getRow(), secondSelected.getCol())
-            );//显示消除线
-            Timer timer = new Timer(300, e -> {//300ms后删除选中状态
-                Cell c1 = gameBoard.getCell(firstSelected.getRow(), firstSelected.getCol());
-                Cell c2 = gameBoard.getCell(secondSelected.getRow(), secondSelected.getCol());
-                c1.setEmpty(true);
-                c2.setEmpty(true);
-                c1.setChosen(false);
-                c2.setChosen(false);
-                lineVisible = false;
-                lineList.clear();
-                firstSelected = null;
-                secondSelected = null;
-                animating = false;
-                statusPanel.addScore(10);//增加分数，消除一次加10分
-                checkWinCondition();
-                repaint();
-            });
-            timer.setRepeats(false);
-            timer.start();
-        } else {
+        Cell firstCell = gameBoard.getCell(firstSelected.getRow(), firstSelected.getCol());
+        
+        if (firstCell.getIconIndex() != secondCell.getIconIndex()) {
             gameBoard.clearAllChosen();
             secondCell.setChosen(true);
             firstSelected = secondSelected;
             secondSelected = null;
+            statusPanel.setStatus("图案不同，请重新选择");
             repaint();
+            return;
         }
+
+        List<Line> connectionPath = gameBoard.getConnectionPath(firstSelected, secondSelected);
+        
+        if (connectionPath.isEmpty()) {
+            gameBoard.clearAllChosen();
+            firstSelected = null;
+            secondSelected = null;
+            statusPanel.setStatus("无法连线，请重新选择");
+            repaint();
+            return;
+        }
+
+        animating = true;
+        showLine(connectionPath);
+
+        MusicPlayer.playEffect("resource/eliminate.wav");
+        //消除动画
+        Timer timer = new Timer(300, e -> {
+            animCell1 = gameBoard.getCell(firstSelected.getRow(), firstSelected.getCol());
+            animCell2 = gameBoard.getCell(secondSelected.getRow(), secondSelected.getCol());
+
+            eliminateAlpha = 1.0f;
+            eliminateScale = 1.0f;
+
+            Timer animTimer = new Timer(16, null);
+
+            animTimer.addActionListener(e2 -> {
+
+                eliminateAlpha -= 0.08f;
+                eliminateScale -= 0.08f;
+
+                if (eliminateAlpha <= 0) {
+
+                    eliminateAlpha = 0;
+                    eliminateScale = 0;
+
+                    animTimer.stop();
+
+                    // 正式消除
+                    animCell1.setEmpty(true);
+                    animCell2.setEmpty(true);
+
+                    animCell1.setChosen(false);
+                    animCell2.setChosen(false);
+
+                    animCell1 = null;
+                    animCell2 = null;
+
+                    lineVisible = false;
+                    lineList.clear();
+
+                    firstSelected = null;
+                    secondSelected = null;
+
+                    animating = false;
+
+                    eliminateAlpha = 1.0f;
+                    eliminateScale = 1.0f;
+
+                    statusPanel.addScore(10);
+                    statusPanel.setStatus("游戏中");
+                    checkWinCondition();
+                }
+                repaint();
+            });
+            animTimer.start();
+        });
+        timer.setRepeats(false);
+        timer.start();
     }
 
     public void startGame() {//开始游戏
         gameStarted = true;
         gameWon = false;
+        repaint();
+    }
+
+    public GameBoard getGameBoard() {
+        return gameBoard;
+    }
+
+    public void setGameBoard(GameBoard gameBoard) {
+        this.gameBoard = gameBoard;
+        this.totalRow = gameBoard.getRowCnt();
+        this.totalCol = gameBoard.getColCnt();
+        this.cellWidth = this.width / totalCol;
+        this.cellHeight = this.height / totalRow;
+        repaint();
+    }
+
+    public int getModeInt() {
+        return mode.equals("easy") ? GameBoard.MODE_SIMPLE : GameBoard.MODE_HARD;
+    }
+
+    public void resetBoard() {
+
+        gameStarted = false;
+        gameWon = false;
+        firstSelected = null;
+        secondSelected = null;
+        animating = false;
+        lineVisible = false;
+        lineList.clear();
+
+        // 根据模式重新生成棋盘
+        if (mode.equals("easy")) {
+            this.gameBoard = GameBoard.generateSimpleBoard();
+        } else {
+            this.gameBoard = GameBoard.generateHardBoard();
+        }
+
+        this.totalRow = gameBoard.getRowCnt();
+        this.totalCol = gameBoard.getColCnt();
+
+        this.cellWidth = this.width / totalCol;
+        this.cellHeight = this.height / totalRow;
+
         repaint();
     }
 
@@ -199,6 +296,38 @@ public class BoardPanel extends JPanel {
         int x = position.getCol() * cellWidth;
         int y = position.getRow() * cellHeight;
         return new Rectangle(x, y, cellWidth, cellHeight);
+    }
+
+    private void drawEliminateCell(Graphics2D g2, Cell cell) {
+        Rectangle rec = getRectangle(cell.getPos());
+        int gap = 4;
+        int x = rec.getX() + gap;
+        int y = rec.getY() + gap;
+        int w = rec.getWidth() - gap * 2;
+        int h = rec.getHeight() - gap * 2;
+
+        // 根据缩放计算实际位置（从中心缩小）
+        int scaledW = (int) (w * eliminateScale);
+        int scaledH = (int) (h * eliminateScale);
+        int scaledX = x + (w - scaledW) / 2;
+        int scaledY = y + (h - scaledH) / 2;
+
+        // 设置透明度
+        AlphaComposite ac = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, Math.max(0, eliminateAlpha));
+        g2.setComposite(ac);
+
+        // 画格子背景
+        g2.setColor(new Color(200, 215, 245));
+        g2.fillRoundRect(scaledX, scaledY, scaledW, scaledH, 12, 12);
+
+        // 画图片
+        g2.drawImage(
+                imageList.get(cell.getIconIndex()),
+                scaledX + 4, scaledY + 4, scaledW - 8, scaledH - 8, this
+        );
+
+        // 恢复透明度
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 1.0f));
     }
 
     @Override
@@ -278,33 +407,33 @@ public class BoardPanel extends JPanel {
         if (gameWon) {
             int panelWidth = width;
             int panelHeight = height;
-            
+
             // 半透明黑色背景，模糊棋盘的效果
             g2.setColor(new Color(0, 0, 0, 180));
             g2.fillRect(0, 0, panelWidth, panelHeight);
-            
+
             // 胜利窗口的边框
             int boxWidth = 400;
             int boxHeight = 200;
             int boxX = (panelWidth - boxWidth) / 2;
             int boxY = (panelHeight - boxHeight) / 2;
-            
+
             g2.setColor(new Color(145, 59, 0));
             g2.setStroke(new BasicStroke(4));
             g2.fillRoundRect(boxX, boxY, boxWidth, boxHeight, 20, 20);
-            
+
             // 游戏胜利时的窗口背景
             g2.setColor(new Color(83, 109, 244, 184));
             g2.fillRoundRect(boxX + 5, boxY + 5, boxWidth - 10, boxHeight - 10, 15, 15);
-            
+
             // 游戏胜利文字
             g2.setColor(new Color(255, 215, 0));
             g2.setFont(new Font("微软雅黑", Font.BOLD, 48));
             FontMetrics fm = g2.getFontMetrics();
-            String winText = "恭喜通关！🥳";
+            String winText = "★恭喜通关★";
             int textWidth = fm.stringWidth(winText);
             g2.drawString(winText, (panelWidth - textWidth) / 2, boxY + 80);
-            
+
             // 分数文字
             g2.setColor(new Color(255, 255, 255));
             g2.setFont(new Font("微软雅黑", Font.PLAIN, 24));
@@ -312,5 +441,11 @@ public class BoardPanel extends JPanel {
             textWidth = fm.stringWidth(scoreText);
             g2.drawString(scoreText, (panelWidth - textWidth) / 2, boxY + 130);
         }
+        // 画消除动画格子
+        if (animCell1 != null && animCell2 != null) {
+            drawEliminateCell(g2, animCell1);
+            drawEliminateCell(g2, animCell2);
+        }
+
     }
 }
