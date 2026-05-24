@@ -2,6 +2,11 @@ package ui;
 
 import javax.swing.*;
 import java.awt.*;
+import model.SessionManager;
+import ui.MusicPlayer;
+import app.Main;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 
 public class StatusPanel extends JPanel {
@@ -39,6 +44,42 @@ public class StatusPanel extends JPanel {
         statusLabel = new JLabel("准备就绪");//状态标签
         timeLabel = new JLabel("00:00:00");//时间标签
         scoreLabel = new JLabel("分数：0");//分数标签
+
+        JButton logoutBtn = new JButton("退出登录") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                if (getModel().isRollover()) {
+                    g2.setColor(new Color(250, 159, 108, 237));
+                } else {
+                    g2.setColor(new Color(255, 146, 99));
+                }
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        logoutBtn.setForeground(Color.WHITE);
+        logoutBtn.setFont(new Font("微软雅黑", Font.BOLD, 14));
+        logoutBtn.setFocusPainted(false);
+        logoutBtn.setBorderPainted(false);
+        logoutBtn.setContentAreaFilled(false);
+        logoutBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        logoutBtn.setBounds(10, 10, 100, 35); // 左上角
+        logoutBtn.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                    null, "确定要退出登录吗？", "退出登录", JOptionPane.YES_NO_OPTION
+            );
+            if (confirm == JOptionPane.YES_OPTION) {
+                SessionManager.clearSession();
+                MusicPlayer.stopBgm();
+                JFrame gameFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                gameFrame.dispose();
+                SwingUtilities.invokeLater(() -> Main.main(new String[]{}));
+            }
+        });
+        this.add(logoutBtn);
 
         timer = new Timer(1000, e -> {
             seconds++;

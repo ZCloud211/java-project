@@ -238,6 +238,7 @@ public class BoardPanel extends JPanel {
                     statusPanel.addScore(10);
                     statusPanel.setStatus("游戏中");
                     checkWinCondition();
+                    checkDeadlock();
                 }
                 repaint();
             });
@@ -347,6 +348,7 @@ public class BoardPanel extends JPanel {
             MusicPlayer.stopBgm();//停止背景音乐
             JFrame gameFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
             gameFrame.dispose();
+            SessionManager.clearSession();
             // 重新启动登录界面
             SwingUtilities.invokeLater(() -> Main.main(new String[]{}));
         });
@@ -409,7 +411,7 @@ public class BoardPanel extends JPanel {
                 int w = rec.getWidth() - gap * 2;
                 int h = rec.getHeight() - gap * 2;
 
-                if (gameBoard.getCell(i, j).isEmpty()||!gameStarted) {
+                if (gameBoard.getCell(i, j).isEmpty() || !gameStarted) {
                     // 空格子：半透明深色圆角,如果没有点开始游戏就只是画背景棋盘，不绘制棋子
                     g2.setColor(new Color(231, 206, 149));
                     g2.fillRoundRect(x, y, w, h, 12, 12);
@@ -507,6 +509,36 @@ public class BoardPanel extends JPanel {
             drawEliminateCell(g2, animCell1);
             drawEliminateCell(g2, animCell2);
         }
+    }
+
+        public void checkDeadlock() {
+            if (gameBoard.hasValidPair()) return; // 还有可消除的对，不是死局
+            if (gameBoard.isBoardEmpty()) return; // 已经全消了，不是死局
+
+            // 死局弹窗
+            SwingUtilities.invokeLater(() -> {
+                String[] options = {"重新开始", "返回主界面"};
+                int choice = JOptionPane.showOptionDialog(
+                        null,
+                        "当前棋盘无可消除的对，游戏结束！",
+                        "死局提示",
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null,
+                        options,
+                        options[0]
+                );
+                if (choice == 0) {
+                    // 重新开始
+                    statusPanel.resetGame();
+                } else {
+                    // 返回主界面
+                    MusicPlayer.stopBgm();
+                    JFrame gameFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                    gameFrame.dispose();
+                    SwingUtilities.invokeLater(() -> Main.main(new String[]{}));
+                }
+            });
+        }
 
     }
-}
