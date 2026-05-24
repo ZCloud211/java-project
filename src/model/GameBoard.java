@@ -27,7 +27,7 @@ public class GameBoard {
         this.board = border;
     }
 
-   //固定模式生成棋盘，确保存在全消路径
+    //固定模式生成棋盘，确保存在全消路径
     public static GameBoard generateBoard(int mode) {
 
         if (mode == MODE_SIMPLE) {
@@ -83,7 +83,8 @@ public class GameBoard {
         }
     }
 
-    /** 填充困难模式棋盘（10×10）
+    /**
+     * 填充困难模式棋盘（10×10）
      */
     private static void fillHardBoard(Cell[][] board, int rows, int cols, List<Integer> icons, Random random) {
         int iconIndex = 0;
@@ -326,7 +327,7 @@ public class GameBoard {
     public String serializeBoard() {
         StringBuilder sb = new StringBuilder();
         sb.append(rowCnt).append(",").append(colCnt).append("\n");
-        
+
         for (int i = 0; i < rowCnt; i++) {
             for (int j = 0; j < colCnt; j++) {
                 Cell cell = board[i][j];
@@ -351,13 +352,13 @@ public class GameBoard {
             if (lines.length < 1) {
                 return null;
             }
-            
+
             String[] dims = lines[0].split(",");
             int rows = Integer.parseInt(dims[0].trim());
             int cols = Integer.parseInt(dims[1].trim());
-            
+
             Cell[][] board = new Cell[rows][cols];
-            
+
             for (int i = 0; i < rows; i++) {
                 if (i + 1 >= lines.length) {
                     return null;
@@ -371,7 +372,7 @@ public class GameBoard {
                     board[i][j] = new Cell(new Position(i, j), iconIndex == 0, iconIndex);
                 }
             }
-            
+
             return new GameBoard(rows, cols, board);
         } catch (Exception e) {
             return null;
@@ -393,92 +394,136 @@ public class GameBoard {
     }
 
 
+    //手动生成简单模式棋盘
+    private static final int[][][][] simpleBoards = {
+            {
+                    {{1, 4, 2, 5}, {3, 1, 5, 2}, {4, 3, 1, 1}, {5, 4, 3, 2}},
+                    {{2, 5, 4, 1}, {3, 2, 1, 4}, {5, 3, 1, 1}, {4, 5, 3, 2}}
+            },
+            {
+                    {{1, 3, 2, 5}, {4, 1, 3, 1}, {5, 2, 3, 2}, {1, 4, 2, 3}},
+                    {{2, 1, 5, 3}, {3, 4, 2, 2}, {1, 3, 1, 4}, {5, 2, 3, 1}}
+            },
+            {
+                    {{1, 2, 3, 4}, {5, 1, 2, 3}, {4, 5, 1, 2}, {3, 1, 2, 3}},
+                    {{2, 3, 5, 1}, {4, 2, 3, 2}, {1, 5, 4, 3}, {3, 1, 2, 1}}
+            },
+            {
+                    {{4, 1, 2, 3}, {3, 5, 1, 2}, {5, 3, 2, 1}, {2, 1, 3, 4}},
+                    {{1, 2, 4, 3}, {2, 3, 1, 5}, {4, 2, 1, 3}, {3, 1, 5, 2}}
+            },
+            {
+                    {{3, 5, 1, 2}, {1, 2, 4, 3}, {5, 3, 2, 1}, {2, 1, 3, 4}},
+                    {{4, 1, 3, 2}, {2, 5, 1, 3}, {3, 2, 4, 5}, {1, 3, 2, 1}}
+            }
+    };
 
-     //手动生成简单模式棋盘
     public static GameBoard generateSimpleBoard() {
+        Random random = new Random();
+        int boardIndex = random.nextInt(simpleBoards.length);
+        int[][][] selectedBoard = simpleBoards[boardIndex];
+
         int size = 11;
         Cell[][] board = new Cell[size][size];
-
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
+        for (int i = 0; i < size; i++)
+            for (int j = 0; j < size; j++)
                 board[i][j] = new Cell(new Position(i, j), true, 0);
-            }
-        }
 
-        int[][] leftTop = {
-                {1, 4, 2, 5},
-                {3, 1, 5, 2},
-                {4, 3, 1, 1},
-                {5, 4, 3, 2}
-        };
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                board[i + 1][j + 1] = new Cell(
-                        new Position(i + 1, j + 1), false, leftTop[i][j]
-                );
-            }
-        }
+        int[][] leftTop = selectedBoard[0];
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                board[i + 1][j + 1] = new Cell(new Position(i + 1, j + 1), false, leftTop[i][j]);
 
-        int[][] rightBottom = {
-                {2, 5, 4, 1},
-                {3, 2, 1, 4},
-                {5, 3, 1, 1},
-                {4, 5, 3, 2}
-        };
-        for (int i = 0; i < 4; i++) {
-            for (int j = 0; j < 4; j++) {
-                board[i + 6][j + 6] = new Cell(
-                        new Position(i + 6, j + 6), false, rightBottom[i][j]
-                );
-            }
-        }
+        int[][] rightBottom = selectedBoard[1];
+        for (int i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                board[i + 6][j + 6] = new Cell(new Position(i + 6, j + 6), false, rightBottom[i][j]);
 
         return new GameBoard(size, size, board);
     }
 
-    //手动生成困难模式棋盘
+    private static final int[][][] hardBoards = {
+            {
+                    {11, 2, 11, 12, 12, 5, 6, 9, 3, 12},
+                    {7, 5, 9, 10, 1, 8, 9, 10, 11, 2},
+                    {4, 5, 9, 11, 12, 6, 3, 7, 2, 8},
+                    {6, 10, 6, 3, 1, 1, 10, 10, 9, 2},
+                    {11, 7, 10, 4, 2, 6, 12, 9, 11, 5},
+                    {5, 3, 6, 3, 12, 3, 7, 12, 8, 2},
+                    {4, 9, 3, 4, 10, 11, 5, 11, 11, 1},
+                    {4, 8, 8, 7, 7, 6, 7, 2, 11, 10},
+                    {12, 7, 8, 12, 6, 4, 4, 4, 9, 5},
+                    {5, 2, 1, 12, 1, 1, 3, 1, 8, 8},
+            },
+// Board 2
+            {
+                    {11, 12, 7, 3, 12, 9, 4, 5, 8, 12},
+                    {7, 12, 11, 10, 10, 10, 6, 7, 11, 8},
+                    {8, 6, 6, 2, 6, 2, 4, 4, 12, 2},
+                    {2, 5, 11, 3, 3, 1, 5, 5, 5, 7},
+                    {3, 8, 1, 3, 4, 10, 12, 2, 1, 3},
+                    {9, 10, 12, 9, 9, 2, 1, 4, 12, 10},
+                    {6, 11, 8, 10, 9, 9, 11, 10, 6, 4},
+                    {11, 7, 5, 8, 4, 11, 7, 1, 7, 11},
+                    {4, 1, 2, 6, 3, 6, 9, 3, 5, 11},
+                    {1, 5, 8, 12, 12, 1, 9, 7, 2, 8},
+            },
+// Board 3
+            {
+                    {2, 9, 5, 5, 10, 5, 3, 7, 3, 1},
+                    {10, 5, 5, 12, 11, 7, 2, 2, 11, 7},
+                    {2, 3, 3, 12, 4, 9, 6, 12, 10, 10},
+                    {4, 3, 9, 9, 6, 12, 11, 3, 9, 12},
+                    {6, 11, 2, 1, 4, 3, 12, 8, 1, 10},
+                    {11, 5, 8, 1, 9, 8, 1, 7, 6, 12},
+                    {4, 4, 11, 10, 11, 10, 9, 7, 8, 6},
+                    {5, 3, 7, 11, 4, 1, 4, 12, 7, 2},
+                    {8, 10, 7, 1, 11, 2, 4, 8, 12, 8},
+                    {6, 6, 9, 1, 8, 6, 2, 11, 5, 12},
+            },
+// Board 4
+            {
+                    {12, 7, 7, 12, 11, 9, 9, 5, 12, 2},
+                    {9, 6, 11, 2, 7, 11, 5, 1, 4, 12},
+                    {9, 4, 11, 3, 6, 4, 3, 6, 3, 6},
+                    {2, 7, 3, 2, 4, 11, 5, 10, 10, 8},
+                    {11, 2, 5, 1, 8, 1, 6, 8, 12, 3},
+                    {12, 1, 3, 8, 10, 3, 1, 7, 4, 11},
+                    {4, 8, 1, 12, 11, 9, 7, 12, 12, 2},
+                    {6, 5, 5, 8, 3, 1, 8, 10, 5, 11},
+                    {12, 4, 10, 5, 10, 9, 7, 10, 11, 9},
+                    {8, 9, 7, 6, 4, 2, 2, 6, 10, 1},
+            },
+// Board 5
+            {
+                    {4, 12, 9, 6, 7, 10, 7, 7, 2, 1},
+                    {4, 9, 2, 6, 12, 11, 12, 10, 2, 3},
+                    {12, 1, 8, 6, 5, 9, 8, 5, 7, 9},
+                    {10, 7, 9, 11, 1, 10, 10, 8, 3, 10},
+                    {7, 7, 5, 6, 1, 5, 3, 3, 8, 4},
+                    {2, 12, 4, 8, 12, 11, 11, 3, 7, 11},
+                    {6, 4, 12, 12, 3, 11, 6, 3, 11, 3},
+                    {6, 11, 11, 9, 2, 9, 1, 12, 1, 8},
+                    {1, 2, 12, 10, 5, 2, 6, 8, 11, 2},
+                    {10, 9, 4, 4, 4, 5, 8, 1, 5, 5},
+            }
+    };
+
     public static GameBoard generateHardBoard() {
+        Random random = new Random();
+        int boardIndex = random.nextInt(hardBoards.length);
+        int[][] selectedBoard = hardBoards[boardIndex];
 
         int size = 12;
         Cell[][] board = new Cell[size][size];
+        for (int i = 0; i < size; i++)
+            for (int j = 0; j < size; j++)
+                board[i][j] = new Cell(new Position(i, j), true, 0);
 
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                board[i][j] =
-                        new Cell(
-                                new Position(i, j),
-                                true,
-                                0
-                        );
-            }
-        }
-
-        int[][] hardBoard = {
-                {1, 4, 2, 5, 3, 6, 7, 8, 9, 10},
-                {11, 12, 1, 7, 4, 2, 5, 5, 6, 8},
-                {9, 10, 11, 12, 2, 5, 3, 6, 1, 4},
-                {7, 8, 9, 10, 11, 12, 4, 4, 5, 3},
-                {6, 1, 4, 7, 8, 9, 10, 11, 12, 2},
-
-                {5, 3, 6, 8, 1, 4, 7, 9, 2, 10},
-                {11, 5, 3, 6, 12, 2, 8, 1, 4, 7},
-                {9, 10, 11, 12, 5, 3, 6, 2, 8, 1},
-                {4, 7, 9, 10, 11, 12, 5, 3, 6, 2},
-                {8, 1, 4, 7, 9, 10, 11, 12, 5, 3}
-        };
-
-        for (int i = 0; i < 10; i++) {
-            for (int j = 0; j < 10; j++) {
-                board[i + 1][j + 1] =
-                        new Cell(
-                                new Position(i + 1, j + 1),
-                                false,
-                                hardBoard[i][j]
-                        );
-            }
-        }
+        for (int i = 0; i < 10; i++)
+            for (int j = 0; j < 10; j++)
+                board[i+1][j+1] = new Cell(new Position(i+1, j+1), false, selectedBoard[i][j]);
 
         return new GameBoard(size, size, board);
     }
-
 }

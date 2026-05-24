@@ -1,9 +1,11 @@
 package ui;
 
+import app.Main;
 import model.GameBoard;
 import model.GameState;
 import model.SaveManager;
 import model.SaveManager.SaveData;
+import model.SessionManager;
 
 import javax.swing.*;
 import java.awt.*;
@@ -16,6 +18,7 @@ public class ControlPanel extends JPanel {
     JButton resetButton;
     JButton saveButton;
     JButton loadButton;
+    JButton themeButton;
 
     JButton musicBtn;//音乐按钮
     MusicPlayer musicPlayer;
@@ -41,13 +44,14 @@ public class ControlPanel extends JPanel {
         this.boardPanel = boardPanel;
         this.username = username;
 
-        this.setBackground(new Color(253, 248, 165));
+        this.setBackground(new Color(250, 243, 217));
 
         this.startButton = createStyledButton("开始");
         this.stopButton = createStyledButton("暂停");
         this.resetButton = createStyledButton("重置");
         this.saveButton = createStyledButton("存档");
         this.loadButton = createStyledButton("读档");
+        this.themeButton = createStyledButton("主题");
 
         int btnWidth = 120;
         int btnHeight = 45;
@@ -101,6 +105,35 @@ public class ControlPanel extends JPanel {
             musicBtn.setText(musicPlayer.isPlaying() ? "音乐 ON" : "音乐 OFF");
         });
         this.add(musicBtn);
+
+        themeButton.setBounds(startX + (btnWidth + 20) * 5, y, btnWidth, btnHeight);
+        this.add(themeButton);
+        themeButton.addActionListener(e -> {
+            String[] options = {"水果", "动物", "物品"};
+            int choice =
+                    JOptionPane.showOptionDialog(
+                            null,
+                            "选择主题",
+                            "主题切换",
+                            JOptionPane.DEFAULT_OPTION,
+                            JOptionPane.INFORMATION_MESSAGE,
+                            null,
+                            options,
+                            options[0]
+                    );
+            switch (choice) {
+                case 0:
+                    boardPanel.loadTheme("fruits");
+                    break;
+                case 1:
+                    boardPanel.loadTheme("animals");
+                    break;
+                case 2:
+                    boardPanel.loadTheme("objects");
+                    break;
+            }
+        });
+        this.add(themeButton);
     }
 
     private void saveGame() {

@@ -7,6 +7,8 @@ public class MusicPlayer {
     private Clip clip;
     private boolean isPlaying = false;
 
+    private static MusicPlayer instance;
+
     public void play(String filePath) {
         try {
             AudioInputStream audioStream = AudioSystem.getAudioInputStream(new File(filePath));
@@ -15,6 +17,7 @@ public class MusicPlayer {
             clip.loop(Clip.LOOP_CONTINUOUSLY); // 循环播放
             clip.start();
             isPlaying = true;
+            instance = this;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -32,6 +35,13 @@ public class MusicPlayer {
 
     public boolean isPlaying() {
         return isPlaying;
+    }
+
+    public static void stopBgm() {
+        if (instance != null && instance.clip != null && instance.clip.isRunning()) {
+            instance.clip.stop();
+            instance.isPlaying = false;
+        }
     }
 
     public static void playEffect(String path) {

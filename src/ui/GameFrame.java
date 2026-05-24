@@ -46,7 +46,8 @@ public class GameFrame extends JFrame{
                 boardSize,
                 boardSize,
                 this.statusPanel,
-                mode
+                mode,
+                username
         );
 
         this.statusPanel.setBoardPanel(boardPanel);
@@ -62,9 +63,9 @@ public class GameFrame extends JFrame{
         this.statusPanel.setBounds(0, 0, frameWidth, 100);
 
         // 按钮栏在下，宽度铺满
-        this.controlPanel = new ControlPanel(statusPanel, boardPanel, 0, boardY + boardSize + 15, frameWidth, 80);
+        this.controlPanel = new ControlPanel(statusPanel, boardPanel, 0, boardY + boardSize + 15, frameWidth, 80, username);
 
-        this.getContentPane().setBackground(new Color(253, 248, 165));
+        this.getContentPane().setBackground(new Color(252, 245, 219));
 
         this.add(this.statusPanel);
         this.add(this.controlPanel);

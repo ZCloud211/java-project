@@ -1,5 +1,6 @@
 package ui;
 
+import app.Main;
 import model.*;
 import model.Rectangle;
 
@@ -38,6 +39,9 @@ public class BoardPanel extends JPanel {
     boolean gameStarted = false;//开始游戏后才可以点击
     boolean gameWon = false;//游戏胜利标志
     String mode;
+    String username;
+
+    private String currentTheme = "fruits";
 
     public Position getPositionByPoint(int x, int y) {
 
@@ -74,7 +78,7 @@ public class BoardPanel extends JPanel {
         secondSelected = null;
     }
 
-    public BoardPanel(GameBoard gameBoard, int offSetX, int offSetY, int width, int height, StatusPanel statusPanel, String mode) {//绘制棋盘,并添加点击事件
+    public BoardPanel(GameBoard gameBoard, int offSetX, int offSetY, int width, int height, StatusPanel statusPanel, String mode, String username) {//绘制棋盘,并添加点击事件
         this.offSetX = offSetX;
         this.offSetY = offSetY;
         this.setBounds(offSetX, offSetY, width, height);
@@ -82,23 +86,19 @@ public class BoardPanel extends JPanel {
         this.totalCol = gameBoard.getColCnt();
         this.width = width;
         this.height = height;
-        this.setLayout(new GridLayout(this.totalRow, this.totalCol));
+        this.setLayout(null);
         this.gameBoard = gameBoard;
         this.setPreferredSize(new Dimension(this.width, this.height));
         this.cellWidth = this.width / totalCol;
         this.cellHeight = this.height / totalRow;
         this.statusPanel = statusPanel;
         this.mode = mode;
+        this.username = username;
 
-        File dir = new File("resource");
-        File[] files = dir.listFiles();
-        Arrays.sort(files); //mac上面要排序图片，Windows不影响
-        for (File file : files) {
-            if (file.getName().endsWith(".png")) {
-                ImageIcon icon = new ImageIcon(file.getPath());
-                imageList.add(icon.getImage());
-            }
-        }
+
+        loadTheme("fruits");
+
+
         this.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -108,6 +108,21 @@ public class BoardPanel extends JPanel {
     }
 
     StatusPanel statusPanel;//状态面板,用于显示游戏状态,时间,分数
+
+    public void loadTheme(String theme) {
+        imageList.clear();
+        File dir = new File("resource/" + theme);
+        File[] files = dir.listFiles();
+        Arrays.sort(files);
+        for (File file : files) {
+            if (file.getName().endsWith(".png")) {
+                ImageIcon icon = new ImageIcon(file.getPath());
+                imageList.add(icon.getImage());
+            }
+        }
+        currentTheme = theme;
+        repaint();
+    }
 
     public void handleClick(int x, int y) {
         if (!gameStarted) {//如果没有点击开始游戏按钮,则不处理点击事件
@@ -178,7 +193,7 @@ public class BoardPanel extends JPanel {
 
         MusicPlayer.playEffect("resource/eliminate.wav");
         //消除动画
-        Timer timer = new Timer(300, e -> {
+        Timer timer = new Timer(100, e -> {
             animCell1 = gameBoard.getCell(firstSelected.getRow(), firstSelected.getCol());
             animCell2 = gameBoard.getCell(secondSelected.getRow(), secondSelected.getCol());
 
@@ -223,6 +238,7 @@ public class BoardPanel extends JPanel {
                     statusPanel.addScore(10);
                     statusPanel.setStatus("游戏中");
                     checkWinCondition();
+                    checkDeadlock();
                 }
                 repaint();
             });
@@ -290,6 +306,52 @@ public class BoardPanel extends JPanel {
             }
         }
         gameWon = true;
+        statusPanel.stopTimer();//胜利后暂停时间
+
+        Main.saveScore(username, statusPanel.getScore(), mode);
+        // 胜利后加返回按钮
+        JButton backBtn = new JButton("返回主界面") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                if (getModel().isRollover()) {
+                    g2.setColor(new Color(100, 180, 60));
+                } else {
+                    g2.setColor(new Color(80, 160, 50));
+                }
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 20, 20);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        backBtn.setForeground(Color.WHITE);
+        backBtn.setFont(new Font("微软雅黑", Font.BOLD, 18));
+        backBtn.setFocusPainted(false);
+        backBtn.setBorderPainted(false);
+        backBtn.setContentAreaFilled(false);
+        backBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // 放在胜利弹窗下方居中
+        int btnW = 180;
+        int btnH = 45;
+        int btnX = (width - btnW) / 2;
+        int btnY = height / 2 + 120;
+        backBtn.setBounds(btnX, btnY, btnW, btnH);
+
+        this.add(backBtn);
+        this.revalidate();
+        this.repaint();
+
+        backBtn.addActionListener(e -> {
+            // 关闭游戏窗口，重新打开登录界面
+            MusicPlayer.stopBgm();//停止背景音乐
+            JFrame gameFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+            gameFrame.dispose();
+            SessionManager.clearSession();
+            // 重新启动登录界面
+            SwingUtilities.invokeLater(() -> Main.main(new String[]{}));
+        });
     }
 
     public Rectangle getRectangle(Position position) {
@@ -338,7 +400,7 @@ public class BoardPanel extends JPanel {
         int gap = 4;
 
         // 棋盘深色背景
-        g2.setColor(new Color(245, 211, 85));
+        g2.setColor(new Color(250, 236, 187));
         g2.fillRect(0, 0, width, height);
 
         for (int i = 0; i < gameBoard.getRowCnt(); i++) {
@@ -349,21 +411,21 @@ public class BoardPanel extends JPanel {
                 int w = rec.getWidth() - gap * 2;
                 int h = rec.getHeight() - gap * 2;
 
-                if (gameBoard.getCell(i, j).isEmpty()||!gameStarted) {
+                if (gameBoard.getCell(i, j).isEmpty() || !gameStarted) {
                     // 空格子：半透明深色圆角,如果没有点开始游戏就只是画背景棋盘，不绘制棋子
-                    g2.setColor(new Color(255, 191, 13));
+                    g2.setColor(new Color(231, 206, 149));
                     g2.fillRoundRect(x, y, w, h, 12, 12);
                 } else {
                     // 有图案格子：渐变浅色背景
                     GradientPaint gp = new GradientPaint(
-                            x, y, new Color(255, 181, 30),
-                            x, y + h, new Color(255, 203, 9)
+                            x, y, new Color(245, 219, 161),
+                            x, y + h, new Color(248, 219, 157)
                     );
                     g2.setPaint(gp);
                     g2.fillRoundRect(x, y, w, h, 12, 12);
 
                     // 格子边框
-                    g2.setColor(new Color(145, 59, 0));
+                    g2.setColor(new Color(164, 112, 53));
                     g2.setStroke(new BasicStroke(2));
                     g2.drawRoundRect(x, y, w, h, 12, 12);
 
@@ -434,6 +496,7 @@ public class BoardPanel extends JPanel {
             int textWidth = fm.stringWidth(winText);
             g2.drawString(winText, (panelWidth - textWidth) / 2, boxY + 80);
 
+
             // 分数文字
             g2.setColor(new Color(255, 255, 255));
             g2.setFont(new Font("微软雅黑", Font.PLAIN, 24));
@@ -446,6 +509,36 @@ public class BoardPanel extends JPanel {
             drawEliminateCell(g2, animCell1);
             drawEliminateCell(g2, animCell2);
         }
+    }
+
+        public void checkDeadlock() {
+            if (gameBoard.hasValidPair()) return; // 还有可消除的对，不是死局
+            if (gameBoard.isBoardEmpty()) return; // 已经全消了，不是死局
+
+            // 死局弹窗
+            SwingUtilities.invokeLater(() -> {
+                String[] options = {"重新开始", "返回主界面"};
+                int choice = JOptionPane.showOptionDialog(
+                        null,
+                        "当前棋盘无可消除的对，游戏结束！",
+                        "死局提示",
+                        JOptionPane.DEFAULT_OPTION,
+                        JOptionPane.WARNING_MESSAGE,
+                        null,
+                        options,
+                        options[0]
+                );
+                if (choice == 0) {
+                    // 重新开始
+                    statusPanel.resetGame();
+                } else {
+                    // 返回主界面
+                    MusicPlayer.stopBgm();
+                    JFrame gameFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                    gameFrame.dispose();
+                    SwingUtilities.invokeLater(() -> Main.main(new String[]{}));
+                }
+            });
+        }
 
     }
-}

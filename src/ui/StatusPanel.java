@@ -2,6 +2,11 @@ package ui;
 
 import javax.swing.*;
 import java.awt.*;
+import model.SessionManager;
+import ui.MusicPlayer;
+import app.Main;
+import javax.swing.JFrame;
+import javax.swing.SwingUtilities;
 
 
 public class StatusPanel extends JPanel {
@@ -25,8 +30,8 @@ public class StatusPanel extends JPanel {
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
-        g2.setPaint(new GradientPaint(0, 0, new Color(146, 203, 99),
-                width, 0, new Color(161, 200, 113)));
+        g2.setPaint(new GradientPaint(0, 0, new Color(149, 189, 102),
+                width, 0, new Color(146, 188, 95)));
         g2.fillRect(0, 0, width, height);
         // 字体颜色改白色
     }
@@ -39,6 +44,42 @@ public class StatusPanel extends JPanel {
         statusLabel = new JLabel("准备就绪");//状态标签
         timeLabel = new JLabel("00:00:00");//时间标签
         scoreLabel = new JLabel("分数：0");//分数标签
+
+        JButton logoutBtn = new JButton("退出登录") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                if (getModel().isRollover()) {
+                    g2.setColor(new Color(250, 159, 108, 237));
+                } else {
+                    g2.setColor(new Color(255, 146, 99));
+                }
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                g2.dispose();
+                super.paintComponent(g);
+            }
+        };
+        logoutBtn.setForeground(Color.WHITE);
+        logoutBtn.setFont(new Font("微软雅黑", Font.BOLD, 14));
+        logoutBtn.setFocusPainted(false);
+        logoutBtn.setBorderPainted(false);
+        logoutBtn.setContentAreaFilled(false);
+        logoutBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        logoutBtn.setBounds(10, 10, 100, 35); // 左上角
+        logoutBtn.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(
+                    null, "确定要退出登录吗？", "退出登录", JOptionPane.YES_NO_OPTION
+            );
+            if (confirm == JOptionPane.YES_OPTION) {
+                SessionManager.clearSession();
+                MusicPlayer.stopBgm();
+                JFrame gameFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+                gameFrame.dispose();
+                SwingUtilities.invokeLater(() -> Main.main(new String[]{}));
+            }
+        });
+        this.add(logoutBtn);
 
         timer = new Timer(1000, e -> {
             seconds++;
@@ -53,9 +94,9 @@ public class StatusPanel extends JPanel {
             timeLabel.setText(String.format("%02d:%02d:%02d", hours, minutes, seconds));
         });
 
-        statusLabel.setForeground(Color.WHITE);
-        timeLabel.setForeground(Color.WHITE);
-        scoreLabel.setForeground(Color.WHITE);
+        statusLabel.setForeground(new Color(255,248,230));
+        timeLabel.setForeground(new Color(255,248,230));
+        scoreLabel.setForeground(new Color(255,248,230));
         statusLabel.setFont(new Font("微软雅黑", Font.BOLD, 30));
         timeLabel.setFont(new Font("微软雅黑", Font.BOLD, 40));
         scoreLabel.setFont(new Font("微软雅黑", Font.BOLD, 25));
@@ -102,7 +143,7 @@ public class StatusPanel extends JPanel {
     public void setStatus(String text) {
         statusLabel.setText(text);
         int y = (height - statusLabel.getPreferredSize().height) / 2;
-        statusLabel.setBounds((width - 300) / 6, y, 300, statusLabel.getPreferredSize().height + 10);
+        statusLabel.setBounds((width - 400) / 6, y, 400, statusLabel.getPreferredSize().height + 10);
         repaint();
     }
     public void startTimer() {
